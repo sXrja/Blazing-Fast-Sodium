@@ -12,7 +12,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class ScreenMixin {
 
     @Inject(method = "render", at = @At("TAIL"))
-    private void fastquit$renderOverlay(GuiGraphics graphics, int mouseX, int mouseY, float delta, CallbackInfo ci) {
-        FastQuitOverlay.render(graphics);
+    private void fastquit$instantDisconnect(GuiGraphics guiGraphics, int i, int j, float f, CallbackInfo ci) {
+        FastQuitOverlay.render(guiGraphics);
     }
 }
