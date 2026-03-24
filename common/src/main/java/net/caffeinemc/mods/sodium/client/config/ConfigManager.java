@@ -101,7 +101,7 @@ public class ConfigManager {
 
                     configIds.add(configId);
 
-                    if (configId.equals("sodium")) {
+                    if (configId.equals("blazingfastsodium")) {
                         sodiumModOptions = modConfig;
                     } else {
                         modConfigs.add(modConfig);

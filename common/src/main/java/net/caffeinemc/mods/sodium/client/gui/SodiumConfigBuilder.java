@@ -59,7 +59,6 @@ public class SodiumConfigBuilder implements ConfigEntryPoint {
         this.vanillaOpts = minecraft.options;
         this.vanillaStorage = this.vanillaOpts == null ? null : () -> {
             this.vanillaOpts.save();
-
             SodiumClientMod.logger().info("Flushed changes to Minecraft configuration");
         };
 
@@ -70,7 +69,6 @@ public class SodiumConfigBuilder implements ConfigEntryPoint {
             } catch (IOException e) {
                 throw new RuntimeException("Couldn't save configuration changes", e);
             }
-
             SodiumClientMod.logger().info("Flushed changes to Sodium configuration");
         };
     }
@@ -129,20 +127,42 @@ public class SodiumConfigBuilder implements ConfigEntryPoint {
     }
 
     private void buildFullConfig(ConfigBuilder builder) {
-        createModOptionsBuilder(builder)
+        var modBuilder = createModOptionsBuilder(builder)
                 .setColorTheme(builder.createColorTheme().setFullThemeRGB(
-                        Colors.THEME, Colors.THEME_LIGHTER, Colors.THEME_DARKER))
+                        Colors.THEME, Colors.THEME_LIGHTER, Colors.THEME_DARKER));
+
+        modBuilder
                 .addPage(this.buildGeneralPage(builder))
                 .addPage(this.buildQualityPage(builder))
                 .addPage(this.buildPerformancePage(builder))
                 .addPage(this.buildAdvancedPage(builder));
+
+        // === NEUER TAB "Blazing Fast Options" ===
+        modBuilder.addPage(this.buildBlazingFastOptionsPage(builder));
+    }
+
+    private OptionPageBuilder buildBlazingFastOptionsPage(ConfigBuilder builder) {
+        var page = builder.createOptionPage()
+                .setName(Component.literal("Blazing Fast Options"));
+
+        // Hier kannst du später deine eigenen Optionen einfügen
+        page.addOptionGroup(builder.createOptionGroup()
+                .addOption(
+                        builder.createBooleanOption(Identifier.parse("blazingfastsodium:example_option"))
+                                .setStorageHandler(this.sodiumStorage)
+                                .setName(Component.literal("Beispiel Option"))
+                                .setTooltip(Component.literal("Deine eigenen Blazing-Fast-Optionen kommen hier rein"))
+                                .setDefaultValue(false)
+                                .setBinding(v -> {}, () -> false)
+                ));
+
+        return page;
     }
 
     private OptionPageBuilder buildGeneralPage(ConfigBuilder builder) {
         var generalPage = builder.createOptionPage().setName(Component.translatable("sodium.options.pages.general"));
         generalPage.addOptionGroup(builder.createOptionGroup()
                 .addOption(
-                        // TODO: make RD option respect Vanilla's >16 RD only allowed if memory >1GB constraint
                         builder.createIntegerOption(Identifier.parse("sodium:general.render_distance"))
                                 .setStorageHandler(this.vanillaStorage)
                                 .setName(Component.translatable("options.renderDistance"))
@@ -204,8 +224,6 @@ public class SodiumConfigBuilder implements ConfigEntryPoint {
 
                                     if (this.window.isFullscreen() != this.vanillaOpts.fullscreen().get()) {
                                         this.window.toggleFullScreen();
-
-                                        // The client might not be able to enter full-screen mode
                                         this.vanillaOpts.fullscreen().set(this.window.isFullscreen());
                                     }
                                 }, this.vanillaOpts.fullscreen()::get)
@@ -216,7 +234,6 @@ public class SodiumConfigBuilder implements ConfigEntryPoint {
                                 .setName(Component.translatable("options.fullscreen.resolution"))
                                 .setTooltip(Component.translatable("sodium.options.fullscreen_resolution.tooltip"))
                                 .setValueFormatter(ControlValueFormatterImpls.resolution())
-                                // the max value of 1 when the monitor is not available prevents an exception from being thrown
                                 .setValidator(new FullscreenResolutionRange())
                                 .setDefaultValue(0)
                                 .setBinding(value -> {
@@ -590,22 +607,6 @@ public class SodiumConfigBuilder implements ConfigEntryPoint {
         return performancePage;
     }
 
-    private OptionBuilder buildNoErrorContextOption(ConfigBuilder builder) {
-        return builder.createBooleanOption(Identifier.parse("sodium:performance.use_no_error_context"))
-                .setStorageHandler(this.sodiumStorage)
-                .setName(Component.translatable("sodium.options.use_no_error_context.name"))
-                .setTooltip(Component.translatable("sodium.options.use_no_error_context.tooltip"))
-                .setDefaultValue(DEFAULTS.performance.useNoErrorGLContext)
-                .setBinding(value -> this.sodiumOpts.performance.useNoErrorGLContext = value, () -> this.sodiumOpts.performance.useNoErrorGLContext)
-                .setEnabledProvider((state) -> {
-                    GLCapabilities capabilities = GL.getCapabilities();
-                    return (capabilities.OpenGL46 || capabilities.GL_KHR_no_error)
-                            && !Workarounds.isWorkaroundEnabled(Workarounds.Reference.NO_ERROR_CONTEXT_UNSUPPORTED);
-                })
-                .setImpact(OptionImpact.LOW)
-                .setFlags(OptionFlag.REQUIRES_GAME_RESTART);
-    }
-
     private OptionPageBuilder buildAdvancedPage(ConfigBuilder builder) {
         var advancedPage = builder.createOptionPage().setName(Component.translatable("sodium.options.pages.advanced"));
 
@@ -640,4 +641,19 @@ public class SodiumConfigBuilder implements ConfigEntryPoint {
         return advancedPage;
     }
 
+    private OptionBuilder buildNoErrorContextOption(ConfigBuilder builder) {
+        return builder.createBooleanOption(Identifier.parse("sodium:performance.use_no_error_context"))
+                .setStorageHandler(this.sodiumStorage)
+                .setName(Component.translatable("sodium.options.use_no_error_context.name"))
+                .setTooltip(Component.translatable("sodium.options.use_no_error_context.tooltip"))
+                .setDefaultValue(DEFAULTS.performance.useNoErrorGLContext)
+                .setBinding(value -> this.sodiumOpts.performance.useNoErrorGLContext = value, () -> this.sodiumOpts.performance.useNoErrorGLContext)
+                .setEnabledProvider((state) -> {
+                    GLCapabilities capabilities = GL.getCapabilities();
+                    return (capabilities.OpenGL46 || capabilities.GL_KHR_no_error)
+                            && !Workarounds.isWorkaroundEnabled(Workarounds.Reference.NO_ERROR_CONTEXT_UNSUPPORTED);
+                })
+                .setImpact(OptionImpact.LOW)
+                .setFlags(OptionFlag.REQUIRES_GAME_RESTART);
+    }
 }
