@@ -24,6 +24,8 @@ public abstract class MinecraftMixin {
             at = @At("HEAD"),
             cancellable = true
     )
+
+
     private void fastquit$instantDisconnect(Screen screen, boolean bl, boolean bl2, CallbackInfo ci) {
 
         Minecraft mc = (Minecraft)(Object)this;
@@ -51,6 +53,16 @@ public abstract class MinecraftMixin {
 
             // ❌ verhindert original while-loop
             ci.cancel();
+        }
+    }
+
+    // ✅ 2. INSTANT MENU (separat!)
+    @Inject(method = "runTick", at = @At("HEAD"))
+    private void fastquit$instantMenu(CallbackInfo ci) {
+        Minecraft mc = (Minecraft)(Object)this;
+
+        if (mc.screen == null) {
+            mc.setScreen(new TitleScreen());
         }
     }
 }

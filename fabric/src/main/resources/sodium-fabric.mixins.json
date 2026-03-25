@@ -15,6 +15,8 @@
     "features.world.biome.BiomeMixin",
     "fabric.LevelSliceMixin",
 
+    "startup.SimpleReloadInstanceMixin",
+
     "fastquit.MinecraftMixin",
     "fastquit.IntegratedServerMixin",
     "fastquit.ScreenMixin"
